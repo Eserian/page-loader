@@ -1,0 +1,36 @@
+{
+  "name": "@hexlet/code",
+  "version": "1.0.0",
+  "description": "[![Actions Status](https://github.com/Eserian/frontend-testing-react-project-lvl1/workflows/hexlet-check/badge.svg)](https://github.com/Eserian/frontend-testing-react-project-lvl1/actions)",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Eserian/frontend-testing-react-project-lvl1.git"
+  },
+  "author": "Evgenii Shevchenko",
+  "license": "ISC",
+  "bin": {
+    "page-loader": "src/bin/pageLoader.js"
+  },
+  "bugs": {
+    "url": "https://github.com/Eserian/frontend-testing-react-project-lvl1/issues"
+  },
+  "homepage": "https://github.com/Eserian/frontend-testing-react-project-lvl1#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.15.7",
+    "@babel/core": "^7.15.5",
+    "@babel/node": "^7.15.4",
+    "@babel/preset-env": "^7.15.6",
+    "@jest/globals": "^27.0.1",
+    "babel-jest": "^27.2.2",
+    "eslint": "^7.27.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.23.3",
+    "eslint-plugin-jest": "^24.3.6",
+    "jest": "^27.0.1",
+    "jest-cli": "^27.0.1"
+  }
+}

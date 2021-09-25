@@ -1,4 +1,4 @@
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import os from 'os';
 import path from 'path';
 import nock from 'nock';
@@ -13,26 +13,32 @@ let tmpDir;
 let expectedHtml;
 const url = 'https://ru.hexlet.io/courses';
 const resultFileName = 'ru-hexlet-io-courses.html';
-const readFileCb = (err) => {
-  if (err) throw err;
-};
 
 beforeAll(async () => {
-  expectedHtml = await fs.readFile(getFixturePath('courses.html'), 'utf-8', readFileCb);
+  expectedHtml = await fs.readFile(getFixturePath('courses.html'), 'utf-8');
 });
 
 beforeEach(async () => {
-  tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'), readFileCb);
+  tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 });
 
-test('page loader', async () => {
-  nock('https://ru.hexlet.io')
-    .get('/courses')
-    .reply(200, expectedHtml);
+describe('page loader', () => {
+  test('return value', async () => {
+    nock('https://ru.hexlet.io')
+      .get('/courses')
+      .reply(200, expectedHtml);
+    const { filepath } = await pageLoader(url, tmpDir);
+    expect(filepath).toBe(path.join(tmpDir, resultFileName));
+  });
 
-  const { filepath } = await pageLoader(url, tmpDir);
-  const result = await fs.readFile(filepath, readFileCb);
+  test('load html', async () => {
+    nock('https://ru.hexlet.io')
+      .get('/courses')
+      .reply(200, expectedHtml);
 
-  expect(filepath).toBe(`${tmpDir}/${resultFileName}`);
-  expect(result).toBe(expectedHtml);
+    const { filepath } = await pageLoader(url, tmpDir);
+    const result = await fs.readFile(filepath, 'utf-8');
+
+    expect(result).toBe(expectedHtml);
+  });
 });

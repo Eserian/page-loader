@@ -8,14 +8,23 @@ import pageLoader from '../src/index';
 nock.disableNetConnect();
 
 const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
-
-let tmpDir;
-let expectedHtml;
 const url = 'https://ru.hexlet.io/courses';
 const resultFileName = 'ru-hexlet-io-courses.html';
+const resultImgPath = 'ru-hexlet-io-courses_files/ru-hexlet-io-assets-professions-nodejs.png';
+
+let tmpDir;
+let sourceHtml;
+let expectedHtml;
+let sourceHtmlWithImg;
+let expectedHtmlWithImg;
+let expectedImg;
 
 beforeAll(async () => {
-  expectedHtml = await fs.readFile(getFixturePath('courses.html'), 'utf-8');
+  sourceHtml = await fs.readFile(getFixturePath('source.html'), 'utf-8');
+  sourceHtmlWithImg = await fs.readFile(getFixturePath('sourceWithImg.html'), 'utf-8');
+  expectedHtml = await fs.readFile(getFixturePath('expected.html'), 'utf-8');
+  expectedHtmlWithImg = await fs.readFile(getFixturePath('expectedWithImg.html'), 'utf-8');
+  expectedImg = await fs.readFile(getFixturePath('expectedImg.png'), 'utf-8');
 });
 
 beforeEach(async () => {
@@ -26,19 +35,36 @@ describe('page loader', () => {
   test('return value', async () => {
     nock('https://ru.hexlet.io')
       .get('/courses')
-      .reply(200, expectedHtml);
+      .reply(200, sourceHtml);
+
     const { filepath } = await pageLoader(url, tmpDir);
+
     expect(filepath).toBe(path.join(tmpDir, resultFileName));
   });
 
   test('load html', async () => {
     nock('https://ru.hexlet.io')
       .get('/courses')
-      .reply(200, expectedHtml);
+      .reply(200, sourceHtml);
 
     const { filepath } = await pageLoader(url, tmpDir);
     const result = await fs.readFile(filepath, 'utf-8');
 
     expect(result).toBe(expectedHtml);
+  });
+
+  test('load image', async () => {
+    nock('https://ru.hexlet.io')
+      .get('/courses')
+      .reply(200, sourceHtmlWithImg)
+      .get('/assets/professions/nodejs.png')
+      .reply(200, expectedImg);
+
+    const { filepath } = await pageLoader(url, tmpDir);
+    const resultImg = await fs.readFile(path.join(tmpDir, resultImgPath), 'utf-8');
+    const result = await fs.readFile(filepath, 'utf-8');
+
+    expect(result).toBe(expectedHtmlWithImg);
+    expect(resultImg).toEqual(expectedImg);
   });
 });

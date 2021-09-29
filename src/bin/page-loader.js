@@ -9,7 +9,7 @@ const program = new Command();
 program
   .version(version)
   .description('Download page')
-  .option('-o, --output [dir]', 'output dir (default: "/app")')
+  .option('-O, --output [dir]', 'output dir (default: "/app")', process.cwd())
   .arguments('<url>')
   .action(async (url, dir) => console.log(`\n${await pageLoader(url, dir)}`))
   .parse(process.argv);

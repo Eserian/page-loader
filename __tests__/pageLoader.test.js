@@ -18,6 +18,8 @@ let expectedHtml;
 let sourceHtmlWithImg;
 let expectedHtmlWithImg;
 let expectedImg;
+let sourceHtmlWithAssets;
+let expectedHtmlWithAssets;
 
 beforeAll(async () => {
   sourceHtml = await fs.readFile(getFixturePath('source.html'), 'utf-8');
@@ -25,6 +27,8 @@ beforeAll(async () => {
   expectedHtml = await fs.readFile(getFixturePath('expected.html'), 'utf-8');
   expectedHtmlWithImg = await fs.readFile(getFixturePath('expectedWithImg.html'), 'utf-8');
   expectedImg = await fs.readFile(getFixturePath('expectedImg.png'), 'utf-8');
+  sourceHtmlWithAssets = await fs.readFile(getFixturePath('sourceWithAssets.html'), 'utf-8');
+  expectedHtmlWithAssets = await fs.readFile(getFixturePath('expectedWithAssets.html'), 'utf-8');
 });
 
 beforeEach(async () => {
@@ -62,9 +66,26 @@ describe('page loader', () => {
 
     const { filepath } = await pageLoader(url, tmpDir);
     const resultImg = await fs.readFile(path.join(tmpDir, resultImgPath), 'utf-8');
-    const result = await fs.readFile(filepath, 'utf-8');
+    const resultHtml = await fs.readFile(filepath, 'utf-8');
 
-    expect(result).toBe(expectedHtmlWithImg);
+    expect(resultHtml).toBe(expectedHtmlWithImg);
     expect(resultImg).toEqual(expectedImg);
+  });
+
+  test('load assets', async () => {
+    nock('https://ru.hexlet.io')
+      .get('/courses')
+      .reply(200, sourceHtmlWithAssets)
+      .get('/assets/professions/nodejs.png')
+      .reply(200)
+      .get('/assets/application.css')
+      .reply(200)
+      .get('/packs/js/runtime.js')
+      .reply(200);
+
+    const { filepath } = await pageLoader(url, tmpDir);
+    const resultHtml = await fs.readFile(filepath, 'utf-8');
+
+    expect(resultHtml).toBe(expectedHtmlWithAssets);
   });
 });

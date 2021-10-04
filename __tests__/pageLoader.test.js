@@ -81,6 +81,8 @@ describe('page loader', () => {
       .get('/assets/application.css')
       .reply(200)
       .get('/packs/js/runtime.js')
+      .reply(200)
+      .get('/courses')
       .reply(200);
 
     const { filepath } = await pageLoader(url, tmpDir);

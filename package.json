@@ -18,6 +18,7 @@
   "bugs": {
     "url": "https://github.com/Eserian/frontend-testing-react-project-lvl1/issues"
   },
+  "type": "module",
   "homepage": "https://github.com/Eserian/frontend-testing-react-project-lvl1#readme",
   "devDependencies": {
     "@babel/cli": "^7.15.7",
@@ -38,6 +39,7 @@
     "axios": "^0.21.4",
     "cheerio": "^1.0.0-rc.10",
     "commander": "^4.1.1",
-    "lodash.flatten": "^4.4.0"
+    "debug": "^4.3.2",
+    "lodash": "^4.17.21"
   }
 }

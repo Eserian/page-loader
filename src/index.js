@@ -2,25 +2,18 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import flatten from 'lodash.flatten';
-import replaceSeparator from './replaceSeparator.js';
+import urlToFilename from './utils.js';
 
-const makeFileStruct = (hostname, pathname, outputDirPath) => {
-  const slug = `${hostname}-${pathname.slice(1)}`;
-  const preparedSlug = replaceSeparator(slug);
-  const fullOutputDirPath = path.resolve(process.cwd(), outputDirPath);
-  const mainFilename = `${preparedSlug}.html`;
-  const mainFilepath = path.join(fullOutputDirPath, mainFilename);
-  const assetsDirname = `${preparedSlug}_files`;
-  const assetsPath = path.join(fullOutputDirPath, assetsDirname);
-  const assetsPrefix = replaceSeparator(hostname);
+const makeFileStruct = (url, outputDir) => {
+  const fullOutputDirPath = path.resolve(process.cwd(), outputDir);
+  const mainFilepath = path.join(fullOutputDirPath, urlToFilename(url));
+  const assetsDir = urlToFilename(url, '_files');
+  const assetsPath = path.join(fullOutputDirPath, assetsDir);
 
   return {
-    mainFilepath, assetsPath, assetsPrefix, assetsDirname,
+    mainFilepath, assetsPath, assetsDir,
   };
 };
-
-const assetsTypes = ['img', 'link', 'script'];
 
 const assetsAttrsMap = {
   img: 'src',
@@ -28,45 +21,37 @@ const assetsAttrsMap = {
   script: 'src',
 };
 
-const parseHtml = (html, assetsPrefix, assetsDir, assetsPath, hostname, origin) => {
+const parseHtml = (html, assetsDir, origin) => {
   const $ = cheerio.load(html);
-  const assetsMap = assetsTypes.reduce((acc, type) => ({ ...acc, [type]: $(type).toArray() }), {});
-
-  const parsedAssets = Object.entries(assetsMap).map(([type, assets]) => assets.map((asset) => {
-    const attr = $(asset).attr(assetsAttrsMap[type]);
-    const filename = `${assetsPrefix}${replaceSeparator(attr, '/')}`;
-    const filepath = `${assetsPath}/${filename}`;
-    const url = new URL(attr, origin);
-    return {
-      filepath, asset, url, filename, type,
-    };
-  }));
-
-  const assetsToDownload = flatten(parsedAssets).filter(({ url }) => url.origin === origin);
-
-  assetsToDownload.forEach((item) => {
-    const { ext } = path.parse(item.url.pathname);
-    const filename = ext ? item.url.pathname : `${item.url.pathname}.html`;
-    const filepath = `${replaceSeparator(item.url.hostname)}${replaceSeparator(filename, '/')}`;
-    $(item.asset).attr(assetsAttrsMap[item.type], `${assetsDir}/${filepath}`);
+  const assets = [];
+  Object.entries(assetsAttrsMap).forEach(([tag, attrType]) => {
+    $(tag).each((_, elem) => {
+      const attr = $(elem).attr(attrType);
+      const url = new URL(attr, origin);
+      if (url.origin !== origin) {
+        return;
+      }
+      const filename = urlToFilename(url);
+      const filepath = `${assetsDir}/${filename}`;
+      assets.push({ filename, url });
+      $(elem).attr(attrType, filepath);
+    });
   });
 
-  return { parsedHtml: $.html(), assets: assetsToDownload };
+  return { parsedHtml: $.html(), assets };
 };
 
-const downloadAsset = (asset) => axios({
+const downloadAsset = (asset, assetsPath) => axios({
   method: 'get',
   url: asset.url.toString(),
   responseType: 'arraybuffer',
 })
-  .then((response) => fs.writeFile(asset.filepath, response.data));
+  .then((response) => fs.writeFile(path.join(assetsPath, asset.filename), response.data));
 
-export default async (url, outputDirPath = '') => {
+export default async (url, outputDir = process.cwd()) => {
   const urlObj = new URL(url);
-  const { hostname, pathname, origin } = urlObj;
-  const {
-    mainFilepath, assetsPath, assetsPrefix, assetsDirname,
-  } = makeFileStruct(hostname, pathname, outputDirPath);
+  const { origin } = urlObj;
+  const { mainFilepath, assetsPath, assetsDir } = makeFileStruct(urlObj, outputDir);
 
   try {
     await fs.access(assetsPath);
@@ -77,10 +62,11 @@ export default async (url, outputDirPath = '') => {
   const { data } = await axios.get(url);
   const {
     parsedHtml, assets,
-  } = parseHtml(data, assetsPrefix, assetsDirname, assetsPath, hostname, origin);
-  const promises = assets.map((asset) => downloadAsset(asset));
+  } = parseHtml(data, assetsDir, origin);
+
+  const promises = assets.map((asset) => downloadAsset(asset, assetsPath));
   await Promise.all(promises);
   await fs.writeFile(mainFilepath, parsedHtml);
 
-  return Promise.resolve({ filepath: mainFilepath });
+  return Promise.resolve({ filepath: path.join(outputDir, urlToFilename(urlObj)) });
 };

@@ -4,7 +4,7 @@
   "description": "[![Actions Status](https://github.com/Eserian/frontend-testing-react-project-lvl1/workflows/hexlet-check/badge.svg)](https://github.com/Eserian/frontend-testing-react-project-lvl1/actions)",
   "main": "src/index.js",
   "scripts": {
-    "test": "DEBUG=nock.* npx -n --experimental-vm-modules jest"
+    "test": "DEBUG=page-loader npx -n --experimental-vm-modules jest"
   },
   "repository": {
     "type": "git",

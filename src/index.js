@@ -51,7 +51,8 @@ const downloadAsset = (asset, assetsPath) => axios({
   url: asset.url.toString(),
   responseType: 'arraybuffer',
 })
-  .then((response) => fs.writeFile(path.join(assetsPath, asset.filename), response.data));
+  .then((response) => fs.writeFile(path.join(assetsPath, asset.filename), response.data))
+  .catch((e) => { throw new Error(`Failed to download asset with url ${asset.url.toString()}: ${e.message}`); });
 
 export default async (url, outputDir = process.cwd()) => {
   log('Download %s page to %s', url, outputDir);
@@ -59,20 +60,30 @@ export default async (url, outputDir = process.cwd()) => {
   const { origin } = urlObj;
   const { mainFilepath, assetsPath, assetsDir } = makeFileStruct(urlObj, outputDir);
 
-  try {
-    await fs.access(assetsPath);
-  } catch (e) {
-    await fs.mkdir(assetsPath);
-  }
+  const { data } = await axios.get(url).catch((e) => {
+    throw new Error(`Failed to download main page: ${e.message}`);
+  });
 
-  const { data } = await axios.get(url);
   const {
     parsedHtml, assets,
   } = parseHtml(data, assetsDir, origin);
 
-  const promises = assets.map((asset) => downloadAsset(asset, assetsPath));
-  await Promise.all(promises);
-  await fs.writeFile(mainFilepath, parsedHtml);
+  if (assets.length) {
+    try {
+      await fs.access(assetsPath);
+    } catch (e) {
+      await fs.mkdir(assetsPath);
+    }
+    const promises = assets.map((asset) => downloadAsset(asset, assetsPath));
+    await Promise.all(promises);
+  }
+
+  try {
+    await fs.writeFile(mainFilepath, parsedHtml);
+  } catch (e) {
+    throw new Error(`Failed to save file: ${e.message}`);
+  }
+
   const filepath = path.join(outputDir, urlToFilename(urlObj));
   log('Page downloaded to %s', filepath);
 

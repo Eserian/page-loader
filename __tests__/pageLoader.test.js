@@ -54,11 +54,15 @@ afterEach(() => {
 });
 
 describe('page loader', () => {
-  test('positive case', async () => {
+  test('should work correctly', async () => {
     const { filepath } = await pageLoader('https://ru.hexlet.io/courses', tmpDir);
 
     const resultHtml = await fs.readFile(filepath, 'utf-8');
     expect(resultHtml).toBe(expectedHtml);
+  });
+
+  test('should download assets', async () => {
+    await pageLoader('https://ru.hexlet.io/courses', tmpDir);
 
     await Promise.all(assets.map(async (asset) => {
       const expectedFile = await fs.readFile(getFixturePath(asset.fixture));
@@ -66,5 +70,18 @@ describe('page loader', () => {
 
       expect(expectedFile).toEqual(resultFile);
     }));
+  });
+
+  test.each([
+    401,
+    403,
+    404,
+    500,
+  ])('should handle %d error', async (errorCode) => {
+    nock('https://ru.hexlet.io')
+      .get('/courses')
+      .reply(errorCode);
+
+    await expect(pageLoader('https://ru.hexlet.io', tmpDir)).rejects.toThrow();
   });
 });

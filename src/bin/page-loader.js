@@ -16,6 +16,7 @@ program
       console.log(filepath);
     } catch (e) {
       console.error(e);
+      process.exit(1);
     }
   })
   .parse(process.argv);

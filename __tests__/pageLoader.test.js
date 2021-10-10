@@ -65,8 +65,8 @@ describe('page loader', () => {
     await pageLoader('https://ru.hexlet.io/courses', tmpDir);
 
     await Promise.all(assets.map(async (asset) => {
-      const expectedFile = await fs.readFile(getFixturePath(asset.fixture));
-      const resultFile = await fs.readFile(path.join(tmpDir, 'ru-hexlet-io-courses_files', asset.resultFilename));
+      const expectedFile = await fs.readFile(getFixturePath(asset.fixture), 'utf-8');
+      const resultFile = await fs.readFile(path.join(tmpDir, 'ru-hexlet-io-courses_files', asset.resultFilename), 'utf-8');
 
       expect(expectedFile).toEqual(resultFile);
     }));

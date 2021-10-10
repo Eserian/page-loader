@@ -8,8 +8,14 @@ const program = new Command();
 
 program
   .version(version)
-  .description('Download page')
-  .option('-O, --output [dir]', 'output dir (default: "/app")', process.cwd())
   .arguments('<url>')
-  .action(async (url, dir) => console.log(`\n${await pageLoader(url, dir)}`))
+  .option('-O, --output <dir>', 'output dir', process.cwd())
+  .action(async (url, options) => {
+    try {
+      const { filepath } = await pageLoader(url, options.output);
+      console.log(filepath);
+    } catch (e) {
+      console.error(e);
+    }
+  })
   .parse(process.argv);

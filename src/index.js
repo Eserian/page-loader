@@ -2,7 +2,12 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import debug from 'debug';
+// eslint-disable-next-line no-unused-vars
+import axiosDebugLog from 'axios-debug-log';
 import urlToFilename from './utils.js';
+
+const log = debug('page-loader');
 
 const makeFileStruct = (url, outputDir) => {
   const fullOutputDirPath = path.resolve(process.cwd(), outputDir);
@@ -49,6 +54,7 @@ const downloadAsset = (asset, assetsPath) => axios({
   .then((response) => fs.writeFile(path.join(assetsPath, asset.filename), response.data));
 
 export default async (url, outputDir = process.cwd()) => {
+  log('Download %s page to %s', url, outputDir);
   const urlObj = new URL(url);
   const { origin } = urlObj;
   const { mainFilepath, assetsPath, assetsDir } = makeFileStruct(urlObj, outputDir);
@@ -67,6 +73,8 @@ export default async (url, outputDir = process.cwd()) => {
   const promises = assets.map((asset) => downloadAsset(asset, assetsPath));
   await Promise.all(promises);
   await fs.writeFile(mainFilepath, parsedHtml);
+  const filepath = path.join(outputDir, urlToFilename(urlObj));
+  log('Page downloaded to %s', filepath);
 
-  return Promise.resolve({ filepath: path.join(outputDir, urlToFilename(urlObj)) });
+  return Promise.resolve({ filepath });
 };

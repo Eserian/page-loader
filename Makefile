@@ -1,5 +1,21 @@
-start:
-	npx babel-node -- src/bin/page-loader.js
+install: install-deps
+
+run:
+	bin/page-loader.js
+
+install-deps:
+	npm ci
 
 test:
-	npx jest --bail
+	npm test
+
+test-coverage:
+	npm test -- --coverage --coverageProvider=v8
+
+lint:
+	npx eslint .
+
+publish:
+	npm publish
+
+.PHONY: test

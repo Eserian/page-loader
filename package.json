@@ -4,7 +4,7 @@
   "description": "[![Actions Status](https://github.com/Eserian/frontend-testing-react-project-lvl1/workflows/hexlet-check/badge.svg)](https://github.com/Eserian/frontend-testing-react-project-lvl1/actions)",
   "main": "src/index.js",
   "scripts": {
-    "test": "npx -n --experimental-vm-modules jest"
+    "test": "DEBUG=nock.* npx -n --experimental-vm-modules jest"
   },
   "repository": {
     "type": "git",
@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "axios": "^0.21.4",
+    "axios-debug-log": "^0.8.4",
     "cheerio": "^1.0.0-rc.10",
     "commander": "^4.1.1",
     "debug": "^4.3.2",

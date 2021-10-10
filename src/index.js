@@ -69,11 +69,7 @@ export default async (url, outputDir = process.cwd()) => {
   } = parseHtml(data, assetsDir, origin);
 
   if (assets.length) {
-    try {
-      await fs.access(assetsPath);
-    } catch (e) {
-      await fs.mkdir(assetsPath);
-    }
+    await fs.mkdir(assetsPath).catch((e) => { throw new Error(`Faild to create files dir: ${e.message}`); });
     const promises = assets.map((asset) => downloadAsset(asset, assetsPath));
     await Promise.all(promises);
   }

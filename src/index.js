@@ -3,13 +3,12 @@ import path from 'path';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import debug from 'debug';
-// eslint-disable-next-line no-unused-vars
-import axiosDebugLog from 'axios-debug-log';
+import 'axios-debug-log';
 import urlToFilename from './utils.js';
 
 const log = debug('page-loader');
 
-const makeFileStruct = (url, outputDir) => {
+const buildPaths = (url, outputDir) => {
   const fullOutputDirPath = path.resolve(process.cwd(), outputDir);
   const mainFilepath = path.join(fullOutputDirPath, urlToFilename(url));
   const assetsDir = urlToFilename(url, '_files');
@@ -51,37 +50,30 @@ const downloadAsset = (asset, assetsPath) => axios({
   url: asset.url.toString(),
   responseType: 'arraybuffer',
 })
-  .then((response) => fs.writeFile(path.join(assetsPath, asset.filename), response.data))
-  .catch((e) => { throw new Error(`Failed to download asset with url ${asset.url.toString()}: ${e.message}`); });
+  .then((response) => fs.writeFile(path.join(assetsPath, asset.filename), response.data));
 
 export default async (url, outputDir = process.cwd()) => {
   log('Download %s page to %s', url, outputDir);
   const urlObj = new URL(url);
   const { origin } = urlObj;
-  const { mainFilepath, assetsPath, assetsDir } = makeFileStruct(urlObj, outputDir);
+  const { mainFilepath, assetsPath, assetsDir } = buildPaths(urlObj, outputDir);
 
-  const { data } = await axios.get(url).catch((e) => {
-    throw new Error(`Failed to download main page: ${e.message}`);
-  });
+  const { data } = await axios.get(url);
 
   const {
     parsedHtml, assets,
   } = parseHtml(data, assetsDir, origin);
 
   if (assets.length) {
-    await fs.mkdir(assetsPath).catch((e) => { throw new Error(`Faild to create files dir: ${e.message}`); });
+    await fs.mkdir(assetsPath);
     const promises = assets.map((asset) => downloadAsset(asset, assetsPath));
     await Promise.all(promises);
   }
 
-  try {
-    await fs.writeFile(mainFilepath, parsedHtml);
-  } catch (e) {
-    throw new Error(`Failed to save file: ${e.message}`);
-  }
+  await fs.writeFile(mainFilepath, parsedHtml);
 
   const filepath = path.join(outputDir, urlToFilename(urlObj));
   log('Page downloaded to %s', filepath);
 
-  return Promise.resolve({ filepath });
+  return { filepath };
 };

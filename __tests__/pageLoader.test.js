@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import os from 'os';
 import path from 'path';
 import nock from 'nock';
-import { beforeAll, expect } from '@jest/globals';
+import { beforeAll, describe, expect } from '@jest/globals';
 import pageLoader from '../src/index';
 
 const assets = [
@@ -53,22 +53,25 @@ afterEach(() => {
   nock.cleanAll();
 });
 
-describe('page loader', () => {
-  test('positive case', async () => {
+describe('positive case', () => {
+  test('should load main html', async () => {
     const { filepath } = await pageLoader('https://ru.hexlet.io/courses', tmpDir);
 
     const resultHtml = await fs.readFile(filepath, 'utf-8');
     expect(resultHtml).toBe(expectedHtml);
-
-    await Promise.all(assets.map(async (asset) => {
-      const expectedFile = await fs.readFile(getFixturePath(asset.fixture), 'utf-8');
-      const resultFile = await fs.readFile(path.join(tmpDir, 'ru-hexlet-io-courses_files', asset.resultFilename), 'utf-8');
-
-      expect(expectedFile).toEqual(resultFile);
-    }));
   });
 
-  it('should handle filesystem errors', async () => {
+  test.each(assets)('shoul load $fixture asset', async (asset) => {
+    await pageLoader('https://ru.hexlet.io/courses', tmpDir);
+    const expectedFile = await fs.readFile(getFixturePath(asset.fixture), 'utf-8');
+    const resultFile = await fs.readFile(path.join(tmpDir, 'ru-hexlet-io-courses_files', asset.resultFilename), 'utf-8');
+
+    expect(expectedFile).toEqual(resultFile);
+  });
+});
+
+describe('negative case', () => {
+  test('should handle filesystem errors', async () => {
     const notExistingPath = path.join(tmpDir, 'notExistingDir');
     await expect(pageLoader('https://ru.hexlet.io/courses', notExistingPath)).rejects.toThrow();
   });
